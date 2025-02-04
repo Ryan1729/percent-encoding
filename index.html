@@ -1,0 +1,165 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <!-- Important for screen size responsiveness! -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>Percent Encoding</title><style type="text/css">
+* {
+    font-family: monospace;
+}
+
+html, .full-h {
+    height: 100%;
+}
+
+body{
+    margin: 0 0;
+    line-height:1.6;
+    font-size:18px;
+    color:#eee;
+    background-color:#111;
+    padding: 0 10px;
+}
+
+/* container */
+.responsive-two-column-grid {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr;
+}
+
+.input-wrapper {
+    margin: 0 10px;
+}
+.output-wrapper {
+    margin: 0 10px;
+    border: 1px solid #888;
+}
+
+#input, #output {
+    color:#eee;
+    background-color:#111;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#output {
+    display: block;
+    white-space: pre;
+}
+
+/* tablet breakpoint */
+@media (min-width:768px) {
+    .responsive-two-column-grid {
+        display: grid;
+        grid-template-rows: 1fr;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style></head>
+<body class="full-h">
+<div class="responsive-two-column-grid full-h">
+    <div class="input-wrapper full-h">
+        <button id="input-copy-button">📋</button>
+        <form id="mode">
+          <legend>Select a encoding mode:</legend>
+
+          <div>
+            <input type="radio" id="uri" name="mode" value="uri" checked />
+            <label for="uri">URI</label>
+          </div>
+
+          <div>
+            <input type="radio" id="uri-component" name="mode" value="uri-component" />
+            <label for="uri-component">URI Component</label>
+          </div>
+
+          <div>
+            <input type="radio" id="include-unreserved-characters" name="mode" value="include-unreserved-characters" />
+            <label for="include-unreserved-characters">Include Unreserved Characters</label>
+          </div>
+        </form>
+        <textarea id="input" placeholder=""></textarea>
+    </div>
+    <div class="output-wrapper full-h">
+        <button id="output-copy-button">📋</button>
+        <output id="output"></output>
+    </div>
+</div>
+
+</body>
+
+<script type="text/javascript">
+
+const mode = document.getElementById("mode");
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+
+const utf8Encoder = new TextEncoder();
+
+const fullyPercentEncode = (s) => {
+    let output = ""
+    
+    const bytes = utf8Encoder.encode(s);
+    for (let i = 0; i < bytes.length; i += 1) {
+        output += "%";
+        output += bytes[i].toString(16).toUpperCase();
+    }
+
+    return output
+}
+
+const update = () => {
+    switch (mode.elements.mode.value) {
+        case "uri":
+            output.value = encodeURI(input.value);
+        break
+        case "uri-component":
+            output.value = encodeURIComponent(input.value);
+        break
+        case "include-unreserved-characters":
+            output.value = fullyPercentEncode(input.value);
+        break
+        default:
+            // TODO indicate error state
+            output.value = input.value;
+    }
+}
+
+mode.onchange = update;
+input.oninput = update;
+
+async function writeClipboardText(text) {
+try {
+  await navigator.clipboard.writeText(text);
+} catch (error) {
+  console.error(error.message);
+}
+}
+
+const setupClipboardButton = (id, getTextFn) => {
+    const copyButton = document.getElementById(id);
+    copyButton.addEventListener("click", () => {
+        writeClipboardText(getTextFn()).then(() => {
+          copyButton.disabled = true;
+          copyButton.innerText = "✅";
+          setTimeout(
+            () => {
+              copyButton.innerText = "📋";
+              copyButton.disabled = false;
+            },
+            16 * 30
+          )
+        });
+    });
+}
+
+setupClipboardButton("input-copy-button", () => input.value);
+setupClipboardButton("output-copy-button", () => output.value);
+
+</script>
+
+</html>
