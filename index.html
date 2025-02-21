@@ -81,6 +81,11 @@ body{
             <input type="radio" id="include-unreserved-characters" name="mode" value="include-unreserved-characters" />
             <label for="include-unreserved-characters">Include Unreserved Characters</label>
           </div>
+
+          <div>
+            <input type="radio" id="make-urls-twitch-safe" name="mode" value="make-urls-twitch-safe" />
+            <label for="make-urls-twitch-safe">Make URLs Twitch Safe</label>
+          </div>
         </form>
         <textarea id="input" placeholder=""></textarea>
     </div>
@@ -102,7 +107,7 @@ const utf8Encoder = new TextEncoder();
 
 const fullyPercentEncode = (s) => {
     let output = ""
-    
+
     const bytes = utf8Encoder.encode(s);
     for (let i = 0; i < bytes.length; i += 1) {
         output += "%";
@@ -110,7 +115,25 @@ const fullyPercentEncode = (s) => {
     }
 
     return output
-}
+};
+
+const CHARS_TWITCH_TREATS_ODDLY = [
+    "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ":", ";", "<", "=", ">", "?", "@", "[", "\\", "]", "^", "_", "`", "{", "|", "}", "~"
+];
+
+const makeURLsTwitchSafe = (s) => {
+    let output = ""
+
+    for (c of s) {
+        if (CHARS_TWITCH_TREATS_ODDLY.indexOf(c) !== -1) {
+            output += fullyPercentEncode(c);
+        } else {
+            output += c;
+        }
+    }
+
+    return output
+};
 
 const update = () => {
     switch (mode.elements.mode.value) {
@@ -122,6 +145,9 @@ const update = () => {
         break
         case "include-unreserved-characters":
             output.value = fullyPercentEncode(input.value);
+        break
+        case "make-urls-twitch-safe":
+            output.value = makeURLsTwitchSafe(input.value);
         break
         default:
             // TODO indicate error state
