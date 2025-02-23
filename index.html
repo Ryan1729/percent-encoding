@@ -86,6 +86,11 @@ body{
             <input type="radio" id="make-urls-twitch-safe" name="mode" value="make-urls-twitch-safe" />
             <label for="make-urls-twitch-safe">Make URLs Twitch Safe</label>
           </div>
+
+          <div>
+            <input type="radio" id="obfuscate-url-stem" name="mode" value="obfuscate-url-stem" />
+            <label for="obfuscate-url-stem">Obfuscate URL Stem</label>
+          </div>
         </form>
         <textarea id="input" placeholder=""></textarea>
     </div>
@@ -135,6 +140,33 @@ const makeURLsTwitchSafe = (s) => {
     return output
 };
 
+const percentEncodeUrlStem = (s) => {
+    let output = ""
+
+    for (c of s) {
+        if (c === "#" || c === "/") {
+            output += c;
+        } else {
+            output += fullyPercentEncode(c);
+        }
+    }
+
+    return output
+};
+
+const obfuscateUrlStem = (s) => {
+    let url
+    try {
+        url = new URL(s);
+    } catch (e) {
+        // TODO indicate error state
+        return s
+    }
+
+    // More could be done with the search, but that hasn't come up in the expected use of obfuscating wikipedia pages yet.
+    return url.origin + percentEncodeUrlStem(url.pathname) + url.search + percentEncodeUrlStem(url.hash);
+};
+
 const update = () => {
     switch (mode.elements.mode.value) {
         case "uri":
@@ -148,6 +180,9 @@ const update = () => {
         break
         case "make-urls-twitch-safe":
             output.value = makeURLsTwitchSafe(input.value);
+        break
+        case "obfuscate-url-stem":
+            output.value = obfuscateUrlStem(input.value);
         break
         default:
             // TODO indicate error state
