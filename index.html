@@ -126,7 +126,7 @@ const CHARS_TWITCH_TREATS_ODDLY = [
     "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ":", ";", "<", "=", ">", "?", "@", "[", "\\", "]", "^", "_", "`", "{", "|", "}", "~"
 ];
 
-const makeURLsTwitchSafe = (s) => {
+const percentEncodeWeirdTwitchCharacters = (s) => {
     let output = ""
 
     for (c of s) {
@@ -138,6 +138,24 @@ const makeURLsTwitchSafe = (s) => {
     }
 
     return output
+};
+
+const makeURLsTwitchSafe = (s) => {
+    let url
+    try {
+        url = new URL(s);
+    } catch (e) {
+        // TODO indicate error state
+        return s
+    }
+
+    const searchPrefix = url.search[0] === "?" ? "?" : (url.search[0] || "");
+    const searchSuffix = url.search.substring(1);
+
+    const hashPrefix = url.hash[0] === "#" ? "#" : (url.hash[0] || "");
+    const hashSuffix = url.hash.substring(1);
+
+    return url.origin + percentEncodeWeirdTwitchCharacters(url.pathname) + searchPrefix + percentEncodeWeirdTwitchCharacters(searchSuffix) + hashPrefix + percentEncodeWeirdTwitchCharacters(hashSuffix);
 };
 
 const percentEncodeUrlStem = (s) => {
